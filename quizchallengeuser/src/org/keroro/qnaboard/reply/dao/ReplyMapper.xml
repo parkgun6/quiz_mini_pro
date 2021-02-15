@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.qnaboard.reply.dao.ReplyMapper">
+	
+	<select id="getAll" resultType="org.keroro.qnaboard.reply.domain.Reply">
+	<![CDATA[
+	select * from (select bno from TBL_QNABOARD where bno = #{bno})qnaboard,
+	(select * from TBL_REPLY where bno = #{bno})reply
+	]]>
+	</select>
+	
+	<insert id="insert">
+	<![CDATA[
+	insert into TBL_REPLY(rno, bno, mid, reply) values (SEQ_REPLY.nextval,#{bno},#{mid},#{reply})
+	]]>
+	</insert>
+	
+	<update id="delete">
+	<![CDATA[
+		update TBL_REPLY set REPLY='사용자에 의해 삭제된 댓글입니다.' where RNO = #{rno}
+	]]>
+	</update>
+	
+</mapper>

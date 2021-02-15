@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.qnaboard.adminanswer.dao.AdminAnswerMapper">
+
+	<insert id="insertAnswer">
+	<![CDATA[
+	insert into TBL_ADMINANSWER (ANO, BNO, AID, ANSWER) VALUES (SEQ_ADMINANSWER.nextval,#{bno},#{aid},#{answer})
+	]]>
+	</insert>
+	
+	<insert id="updateState">
+	<![CDATA[
+	update TBL_QNABOARD set STATE = 1 where BNO = #{bno}
+	]]>
+	</insert>
+
+	<select id="getAnswer" resultType="org.keroro.qnaboard.adminanswer.domain.AdminAnswer">
+	<![CDATA[
+	select ano, bno, aid, answer, status, regdate, updatedate from TBL_ADMINANSWER where bno = #{bno}
+	]]>
+	</select>
+</mapper>

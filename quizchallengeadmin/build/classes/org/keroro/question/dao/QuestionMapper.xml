@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.question.dao.QuestionMapper">
+
+  <select id="getPagedListOfQuestion" resultType="Question">
+ 	<![CDATA[
+	SELECT /*+ordered use_nl(temp tbl_question)*/ * FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        	(
+           	SELECT ROWID RD FROM tbl_question
+                ORDER BY qno DESC
+            ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    	) temp, tbl_question
+	WHERE RN > #{perSheet} * (#{page} - 1) AND temp.RD = tbl_question.ROWID
+	]]>
+</select>
+  
+  
+<select id="getTotalOfQuestion" resultType="long">
+ 	<![CDATA[
+ 	select count(*) from tbl_question where qno not in
+    (select qno from tbl_qhistory where aid = #{mid} and qno > 0)
+       and difficulty = #{difficulty}
+	]]>
+</select>
+
+<insert id="insertQuestion">
+ 	<![CDATA[
+	insert into tbl_question(qno, aid, quiz, answer, difficulty)
+	VALUES (seq_question.nextval, #{aid}, #{quiz}, #{answer}, #{difficulty})
+	]]>
+</insert>
+
+
+
+
+
+
+<insert id="insertQhistory">
+ 	<![CDATA[
+	insert into tbl_qhistory (hno, qno, mid, memberanswer, checkanswer)
+	VALUES (seq_qhistory.nextval, #{qno}, #{mid}, #{memberAnswer}, )
+	]]>
+</insert>
+
+
+<select id="getPagedListOfQhistory" resultType="Qhistory">
+ 	 	<![CDATA[
+	SELECT /*+ordered use_nl(temp tbl_qhistory)*/ hno, qno, mid, memberAnswer, checkAnswer, regDate, updateDate FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        	(
+           	SELECT ROWID RD FROM tbl_qhistory
+                ORDER BY hno DESC
+            ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    	) temp, tbl_qhistory
+	WHERE RN > #{perSheet} * (#{page} - 1) AND temp.RD = tbl_qhistory.ROWID
+	]]>
+</select>
+  
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  <settings>
+	<setting name="logImpl" value="LOG4J"/>  
+  </settings>
+  
+  <typeAliases>
+
+	<typeAlias type="org.keroro.question.dto.QhistoryDTO" alias="QhistoryDTO"/>
+ 	<typeAlias type="org.keroro.member.domain.Member" alias="Member"/>
+    <typeAlias type="org.keroro.member.dto.MemberDTO" alias="MemberDTO"/>  
+    <typeAlias type="org.keroro.member.dto.ScoreDTO" alias="ScoreDTO"/>  
+
+  	<typeAlias type="org.keroro.question.domain.Question" alias="Question"/>
+  	<typeAlias type="org.keroro.question.domain.Qhistory" alias="Qhistory"/>
+
+
+  </typeAliases>
+  
+  <environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC"/>
+      <dataSource type="POOLED">
+        <property name="driver" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@112.169.196.210:1521:XE"/>
+        <property name="username" value="teamkeroro"/>
+        <property name="password" value="keroro"/>
+      </dataSource>
+    </environment>
+  </environments>
+  
+  <mappers>
+
+	<mapper resource="org/keroro/question/dao/QuestionMapper.xml"/>
+	<mapper resource="org/keroro/member/dao/MemberMapper.xml"/>
+	<mapper resource="org/keroro/qnaboard/dao/QnaBoardMapper.xml"/>
+	<mapper resource="org/keroro/qnaboard/reply/dao/ReplyMapper.xml" />
+	
+	<mapper resource="org/keroro/qnaboard/dao/QnaBoardMapper.xml" />
+	<mapper resource="org/keroro/qnaboard/reply/dao/ReplyMapper.xml" />
+	<mapper resource="org/keroro/qnaboard/adminanswer/dao/AdminAnswerMapper.xml" />
+  </mappers>
+</configuration>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.question.dao.QuestionMapper">
+
+
+	<select id="getRandomQuestion" resultType="Question">
+	<![CDATA[
+	select * from tbl_question where qno = (select qno from
+	(select rownum rn, qno, quiz, answer, difficulty from tbl_question where qno not in
+    	(select qno from tbl_qhistory where mid = #{mid} and qno > 0)
+    	and difficulty = #{difficulty})
+	where rn = #{random})
+	]]>
+	</select>
+
+	<select id="getOneQuestion" resultType="Question">
+ 	<![CDATA[
+ 		select * from tbl_question where qno = #{qno}
+ 	]]>
+	</select>
+
+	<select id="getTotalForDTO" resultType="int">
+ 	<![CDATA[
+ 		select count(*) from tbl_question where qno not in
+    (select qno from tbl_qhistory where mid = #{mid} and qno > 0)
+       and difficulty = #{difficulty}
+ 	]]>
+	</select>
+
+	<insert id="insertQhistory" parameterType="Qhistory">
+	<![CDATA[
+		insert into TBL_QHISTORY(hno, qno, mid, memberAnswer, checkAnswer) values (SEQ_QHISTORY.nextval,#{qno},#{mid},#{memberAnswer},#{checkAnswer})
+	]]>
+	</insert>
+	
+	
+<select id = "getPageListOfMyHistory" resultType="QhistoryDTO">
+		<![CDATA[
+SELECT /*+ordered use_nl(temp tbl_qhistory)*/  
+	history.HNO, history.qno, history.mid, question.quiz, question.difficulty,
+    question.ANSWER, history.memberanswer, history.CHECKANSWER, history.REGDATE, history.UPDATEDATE
+     FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        	(
+           	select history.ROWID RD from tbl_qhistory history, TBL_QUESTION question
+                where history.qno = question.qno and history.mid = #{mid}
+                ORDER BY hno DESC
+            ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    	) temp, tbl_qhistory history, tbl_question question
+	WHERE RN > #{perSheet} * (#{page} - 1) AND temp.RD = history.ROWID
+AND history.qno = question.qno and history.mid = #{mid}
+			]]>
+	</select>
+	
+	
+	<select id = "getTotalOfMyHistory" resultType="int">
+		<![CDATA[
+		select
+    count(*)
+from tbl_qhistory history, TBL_QUESTION question 
+where history.qno = question.qno 
+and history.mid = #{mid}
+			]]>
+	</select>
+	
+	<select id = "getMyHistory" resultType="QhistoryDTO">
+		<![CDATA[
+select
+    history.HNO, history.qno, history.mid, question.quiz, question.ANSWER,
+    question.difficulty, history.memberanswer, history.CHECKANSWER, history.REGDATE, history.UPDATEDATE
+from
+(select * from tbl_qhistory where mid= #{mid} and qno = #{qno}) history
+, (select * from TBL_QUESTION) question where history.qno = question.qno
+			]]>
+	</select>
+	
+	
+
+</mapper>

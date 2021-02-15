@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.member.dao.MemberMapper">
+
+	<select id="selectMember" parameterType="Member"
+		resultType="Member">
+	<![CDATA[
+	select * from tbl_member where mid=#{mid} and mpw=#{mpw}
+	]]>
+	</select>
+	
+	<!-- insert into TBL_QHISTORY(hno, qno, mid, memberanswer, checkanswer) 
+		values (SEQ_QHISTORY.nextval,131075,'hj','testAnswer','o') -->
+
+	<select id="selectMemberQhistoryAll" parameterType="String"
+		resultType="QhistoryDTO">
+	<![CDATA[
+	select h.hno hno,h.qno qno,h.regDate regDate,h.mid mid ,h.checkAnswer checkAnswer,q.difficulty difficulty
+from TBL_QHISTORY h, TBL_QUESTION q
+where h.QNO = q.QNO and mid = #{mid} order by hno desc
+	]]>
+	</select>
+	
+	
+	
+	<select id="selectMemberQhistoryCount" parameterType="hashMap"
+		resultType="int">
+	<![CDATA[
+	select count(*) from
+	TBL_QHISTORY h , TBL_QUESTION q
+	where h.QNO = q.QNO and mid = #{mid} and (DIFFICULTY=#{dif0} or DIFFICULTY=#{dif1} or DIFFICULTY=#{dif2})
+	]]>
+	</select>
+	<select id="selectMemberCorrectCount" parameterType="hashMap"
+		resultType="int">
+	<![CDATA[
+	select count(*) from
+	TBL_QHISTORY h , TBL_QUESTION q
+	where h.QNO = q.QNO and mid = #{mid} and (DIFFICULTY=#{dif0} or DIFFICULTY=#{dif1} or DIFFICULTY=#{dif2}) and CHECKANSWER = 'o'
+	]]>
+	</select>
+	<select id="selectMemberQhistoryCountReg" parameterType="hashMap"
+		resultType="int">
+	<![CDATA[
+	select count(*) from
+	TBL_QHISTORY h , TBL_QUESTION q
+	where h.QNO = q.QNO and mid = #{mid} and (DIFFICULTY=#{dif0} or DIFFICULTY=#{dif1} or DIFFICULTY=#{dif2}) 
+	and h.REGDATE<= to_char(sysdate-#{regDateMinus},'yyyy-mm-dd')
+	]]>
+	</select>
+	<select id="selectMemberCorrectCountReg" parameterType="hashMap"
+		resultType="int">
+	<![CDATA[
+	select count(*) from
+	TBL_QHISTORY h , TBL_QUESTION q
+	where h.QNO = q.QNO and mid = #{mid} and (DIFFICULTY=#{dif0} or DIFFICULTY=#{dif1} or DIFFICULTY=#{dif2}) 
+	and CHECKANSWER = 'o' and h.REGDATE<= to_char(sysdate-#{regDateMinus},'yyyy-mm-dd')
+	]]>
+	</select>
+	
+	<!-- STASTICS -->
+	<update id="statistics">
+	<![CDATA[
+	update tbl_statistics set
+                            totalquestion =  (select count(q.QNO) from TBL_QHISTORY h, TBL_QUESTION q where mid = #{mid} and DEPRECATED='n' and q.QNO = h.QNO),
+                            totalscore = (select sum(DIFFICULTY)
+                                          from TBL_QUESTION q, TBL_QHISTORY h
+                                          where q.QNO = h.QNO and mid = #{mid} and CHECKANSWER ='o' and DEPRECATED ='n'),
+                            mean=  ((select sum(DIFFICULTY)
+                                     from TBL_QUESTION q, TBL_QHISTORY h
+                                     where q.QNO = h.QNO and mid = #{mid} and CHECKANSWER ='o' and DEPRECATED ='n')
+                                     / (select count(q.QNO)
+                                        from TBL_QHISTORY h, TBL_QUESTION q
+                                        where mid = #{mid} and DEPRECATED='n' and q.QNO = h.QNO)),
+                            updatedate = sysdate
+
+                      where mid = #{mid}
+    	]]>
+	</update>
+	
+	<select id="getPercentPagedList" resultType="MemberDTO">
+	<![CDATA[
+	SELECT *
+	FROM (SELECT /*+INDEX_ASC(tbl_statistics pk_statistics) */
+               	rownum rn, mid, mean, PERCENT_RANK() OVER (ORDER BY mean DESC) as perrank
+          FROM tbl_statistics where rownum <= (#{page} * #{perSheet})
+	    ) a
+	where rn > (#{page} -1) * #{perSheet}
+    ]]>		
+	</select>
+	
+	<select id="getPercentList" resultType="MemberDTO">
+	<![CDATA[
+	SELECT mid, mean, perrank,updatedate
+          FROM (SELECT mid, mean, PERCENT_RANK() OVER (ORDER BY mean DESC) as perrank, updatedate
+                FROM tbl_statistics
+               ) a
+    ]]>		
+	</select>
+
+    
+	<select id="getPercentOne" resultType="MemberDTO">
+	<![CDATA[
+	SELECT * FROM (SELECT mid, mean, updatedate,
+       PERCENT_RANK() OVER (ORDER BY mean DESC) as perRank FROM tbl_statistics) a
+	where mid = #{mid}
+    ]]>
+	</select>
+	
+	
+	<select id="getScoreList" resultType="ScoreDTO">
+	<![CDATA[
+	select TEMP.difficulty, sum(CORRECT) correct, sum(WRONG) wrong, count(*) total
+	,  sum(CORRECT)/count(*)*TEMP.difficulty avg, sum(CORRECT)*TEMP.difficulty totalscore
+	 from
+(select
+    history.HNO, history.qno, history.mid, question.quiz, question.difficulty,
+    question.ANSWER, history.memberanswer, DECODE(history.CHECKANSWER,'o',1,0) CORRECT, DECODE(history.CHECKANSWER,'x',1,0) WRONG, history.REGDATE, history.UPDATEDATE
+from tbl_qhistory history, TBL_QUESTION question where history.qno = question.qno and history.mid = #{mid}) TEMP
+group by TEMP.difficulty  order by TEMP.difficulty
+    ]]>
+	</select>
+	
+	
+	<select id="getTotal" resultType="int">
+	<![CDATA[
+	select count(*) from tbl_member
+    ]]>
+	</select>
+	
+	
+	<insert id="signup">
+	insert into tbl_member (mid, mpw, mname, regdate, updatedate)
+VALUES (#{mid}, #{mpw}, #{mname}, sysdate, sysdate)
+	</insert>
+	
+	
+	
+<update id="keepLogin">
+	<![CDATA[
+    update TBL_MEMBER 
+    set sessionKey = #{sessionKey}, sessionLimit = #{sessionLimit} where mid=#{mid}
+    ]]>
+</update>	
+
+<select id="checkSessionKey" parameterType="String" resultType="Member">
+    select * from TBL_MEMBER where sessionKey = #{sessionKey} and sessionLimit > sysdate
+</select>
+	
+</mapper>

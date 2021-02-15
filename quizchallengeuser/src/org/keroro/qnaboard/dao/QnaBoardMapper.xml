@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.qnaboard.dao.QnABoardMapper">
+
+	<select id="getList" resultType="org.keroro.qnaboard.domain.QnaBoard">
+		<![CDATA[
+		select
+		bno, mid, qno, title,
+		content, state, regdate, updatedate, aid,
+		category, status
+		from (
+		select /*+ INDEX_DESC(TBL_QNABOARD PK_QNABOARD) */
+
+            rownum rn,bno, mid, qno, title,
+		    content, state, regdate, updatedate, aid,
+		    category, status
+
+         from TBL_QNABOARD
+         where BNO > 0 and status = 0 ]]> 
+         <if test="state == 1">
+         	and state = 1         
+         </if>
+         <if test="state == 2">
+         	and state = 2        
+         </if>
+         <if test="category == 1">
+         	and category = 1   
+		</if>
+		<if test="category == 2">
+         	and category = 2  
+		</if>
+		<if test="category == 3">
+         	and category = 3  
+		</if>
+		<if test="category == 4">
+         	and category = 4  
+		</if>
+		<![CDATA[
+           and rownum <= (#{page} * #{perSheet})
+     	)
+		where rn > ( #{page} - 1 ) * #{perSheet} 
+		 ]]>
+		
+	</select>
+
+	<select id="getTotal" resultType="int">
+		<![CDATA[
+		select count(bno) from tbl_qnaboard where status = 0
+		]]>
+		<if test="state == 1">
+         	and state = 1    
+		</if>
+		<if test="state == 2">
+         	and state = 2   
+		</if>
+		<if test="category == 1">
+         	and category = 1   
+		</if>
+		<if test="category == 2">
+         	and category = 2   
+		</if>
+		<if test="category == 3">
+         	and category = 3   
+		</if>
+		<if test="category == 4">
+         	and category = 4   
+		</if>
+	</select>
+	
+	<select id="getOne" resultType="org.keroro.qnaboard.domain.QnaBoard">
+	<![CDATA[
+		select * from tbl_question ,(select * from tbl_qnaboard where bno = #{bno}) board
+   		where tbl_question.qno = board.qno
+		]]>
+	</select>
+	
+	<insert id="insert">
+	<![CDATA[
+		insert into TBL_QNABOARD(bno, mid, qno, title, content, category,STATE)
+ 		values (SEQ_QNABOARD.nextval,#{mid},#{qno},#{title},#{content},#{category},#{state})
+	]]>
+	</insert>
+	
+	<update id="delete">
+	<![CDATA[
+		update TBL_QNABOARD set STATUS = 1 where BNO = #{bno}
+	]]>
+	</update>
+	
+	<update id="update">
+	<![CDATA[
+		
+		update TBL_QNABOARD set qno = #{qno}, title = #{title},
+		content = #{content}, category = #{category}, state = #{state} where bno = #{bno}
+	]]>
+	</update>
+	
+	<update id="acceptAnswer">
+	<![CDATA[
+		update TBL_QNABOARD set state = 1 where bno = #{bno}
+	]]>
+	</update>
+	
+</mapper>

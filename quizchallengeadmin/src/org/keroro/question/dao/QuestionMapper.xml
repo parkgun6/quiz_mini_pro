@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.question.dao.QuestionMapper">
+
+<update id="modifyQuestion">
+	<![CDATA[
+UPDATE tbl_question set 
+	aid = #{aid}, quiz = #{quiz}, answer = #{answer}, updatedate = sysdate, deprecated=#{deprecated}
+	, difficulty=#{difficulty} 
+WHERE qno = #{qno}
+	]]>
+</update>
+
+<select id="getRandomQuestion" resultType="Question">
+	<![CDATA[
+	select * from tbl_question where qno = (select qno from
+	(select rownum rn, qno, quiz, answer, difficulty from tbl_question where qno not in
+    	(select qno from tbl_qhistory where mid = #{mid} and qno > 0)
+    	and difficulty = #{difficulty})
+	where rn = #{random})
+	]]>
+</select>
+
+ <select id="getOneQuestion" resultType="Question">
+ 	<![CDATA[
+ 		select * from tbl_question where qno = #{qno}
+ 	]]>
+</select>
+
+<select id="getTotalForDTO" resultType="int">
+ 	<![CDATA[
+ 		select count(*) from tbl_question where qno not in
+    (select qno from tbl_qhistory where mid = #{mid} and qno > 0)
+       and difficulty = #{difficulty}
+ 	]]>
+</select>
+
+  <select id="getPagedListOfQuestion" resultType="Question">
+ 	<![CDATA[
+	SELECT /*+ordered use_nl(temp tbl_question)*/ * FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        	(
+           	SELECT ROWID RD FROM tbl_question
+                ORDER BY qno DESC
+            ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    	) temp, tbl_question
+	WHERE RN > #{perSheet} * (#{page} - 1) AND temp.RD = tbl_question.ROWID
+	]]>
+</select>
+  
+  
+<select id="getTotalOfQuestion" resultType="int">
+ 	<![CDATA[
+ 	select count(*) from tbl_question where qno not in
+    (select qno from tbl_qhistory where aid = #{mid} and qno > 0)
+       and difficulty = #{difficulty}
+	]]>
+</select>
+
+  
+<select id="getTotalOfQuestionAll" resultType="int">
+ 	<![CDATA[
+ 	select count(*) from tbl_question
+	]]>
+</select>
+
+<insert id="insertQuestion">
+ 	<![CDATA[
+	insert into tbl_question(qno, aid, quiz, answer, difficulty)
+	VALUES (seq_question.nextval, #{aid}, #{quiz}, #{answer}, #{difficulty})
+	]]>
+</insert>
+
+
+
+
+
+
+<!-- QHISTORY -->
+<!-- QHISTORY -->
+<!-- QHISTORY -->
+<select id="getPagedListOfQhistory" resultType="QhistoryDTO">
+ 	 	<![CDATA[
+	SELECT /*+ordered use_nl(temp tbl_qhistory)*/ hno, qno, mid, memberAnswer, checkAnswer, regDate, updateDate FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        	(
+        	
+           	SELECT ROWID RD FROM tbl_qhistory
+                ORDER BY hno DESC
+                
+            ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    	) temp, tbl_qhistory
+	WHERE RN > #{perSheet} * (#{page} - 1) AND temp.RD = tbl_qhistory.ROWID
+	]]>
+</select>
+
+
+<select id="getTotalOfQhistoryAll" resultType="int">
+ 	<![CDATA[
+ 	select count(*) from tbl_qhistory
+	]]>
+</select>
+
+
+
+<insert id="insertQhistory">
+ 	<![CDATA[
+	insert into tbl_qhistory (hno, qno, mid, memberanswer, checkanswer)
+	VALUES (seq_qhistory.nextval, #{qno}, #{mid}, #{memberAnswer}, #{checkAnswer})
+	]]>
+</insert>
+
+
+<!-- QhistoryDTO -->
+<!-- QhistoryDTO -->
+<!-- QhistoryDTO -->
+
+<select id="getAllListOfQhistoryDTO" resultType="QhistoryDTO">
+ 	<![CDATA[
+select
+    history.HNO, history.qno, history.mid, question.quiz, question.ANSWER,
+    history.memberanswer, history.CHECKANSWER, history.REGDATE, history.UPDATEDATE
+from
+(select * from tbl_qhistory) history, (select * from TBL_QUESTION) question where history.qno = question.qno
+	]]>
+</select>
+
+
+<select id="getQuestionByMID" resultType="QhistoryDTO">
+ 	<![CDATA[
+ 	select
+    history.HNO, history.qno, history.mid, question.quiz, question.ANSWER,
+    history.memberanswer, history.CHECKANSWER, history.REGDATE, history.UPDATEDATE
+from
+(select * from tbl_qhistory) history, (select * from TBL_QUESTION) question where history.qno = question.qno
+ 	]]>
+</select>
+
+
+<select id="getPagedListOfQhistoryDTO" resultType="QhistoryDTO">
+ 	<![CDATA[
+SELECT /*+ordered use_nl(temp history)*/
+       tbl_qhistory.HNO, tbl_qhistory.qno, tbl_qhistory.mid, question.quiz, question.ANSWER,
+       tbl_qhistory.memberanswer, tbl_qhistory.CHECKANSWER, tbl_qhistory.REGDATE, tbl_qhistory.UPDATEDATE FROM
+	(
+    SELECT ROWNUM RN, RD FROM
+        (
+            SELECT
+            history.ROWID RD
+            FROM
+                (SELECT * from tbl_qhistory) history
+            ORDER BY hno DESC
+        ) T WHERE ROWNUM <= #{perSheet} * #{page}
+    ) temp, tbl_qhistory, (SELECT * from TBL_QUESTION) question
+WHERE RN > #{perSheet} * (#{page} - 1) 
+AND temp.RD = tbl_qhistory.ROWID 
+AND tbl_qhistory.qno = question.qno
+ORDER BY hno desc
+]]>
+</select>
+  
+</mapper>

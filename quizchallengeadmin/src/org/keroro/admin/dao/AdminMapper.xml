@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.keroro.admin.dao.AdminMapper">
+
+	<select id="getAdmin" resultType="Admin">
+	<![CDATA[
+	select * from tbl_admin where aid=#{aid} and apw=#{apw}
+	]]>
+	</select>
+
+
+	<select id="getList" resultType="Admin">
+	<![CDATA[
+	select
+  		 aid, apw, REGDATE, UPDATEDATE
+	from (
+        	 select /*+INDEX_ASC(tbl_admin pk_admin) */
+             rownum rn, aid, apw, REGDATE, UPDATEDATE
+        	 from TBL_ADMIN
+        	 where rownum <= (#{page} * #{perSheet})
+     	)
+	where rn > (#{page} -1) * #{perSheet}
+	]]>
+	</select>
+  	
+	<select id="getOne" resultType="Admin">
+	<![CDATA[
+	select /*+INDEX_DESC(tbl_admin pk_admin) */ *  from TBL_ADMIN where AID = #{aid}
+	]]>
+	</select>
+  	
+  	<update id="update">
+  	<![CDATA[
+	update tbl_admin
+	set apw = #{apw}, updatedate = sysdate
+	where aid = #{aid}
+	]]>
+  	</update>
+
+  	<select id="getTotal" resultType="int">
+  	select count(aid) from tbl_admin
+  	</select>    
+  	
+	<delete id="delete">
+	delete TBL_ADMIN where AID = #{aid}
+	</delete>	
+</mapper>
